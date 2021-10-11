@@ -6,9 +6,19 @@ This is a [ROS 2](https://docs.ros.org/en/foxy/index.html) simulation stack for 
 
 ## Prerequisites
 
-1. Ros 2 ([foxy](https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html) or [galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)): it's recommended to install the desktop version of the distribution of your choosing, this will also install RViz 2. Bare in mind that if another version is installed, some dependencies may be missing.
-2. [Gazebo](http://gazebosim.org/tutorials?tut=install_ubuntu)
-3. [RViz2](https://github.com/ros2/rviz): this is included as part of the rosdep dependecies.
+1. At the moment there are some packages that need to be installed from source for Galactic because they aren't fully supported yet. Please install these via [vcs](https://github.com/dirk-thomas/vcstool).
+- If vcs is not yet intalled on your machine do it with:
+```bash
+sudo apt-get install python3-vcstool
+```
+- Now you can clone the source dependencies with:
+```bash
+cd create3_sim
+vcs import ./ < galactic.repos
+```
+2. Ros 2 ([galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)): it's recommended to install the desktop version of the distribution of your choosing, this will also install RViz 2. Bare in mind that if another version is installed, some dependencies may be missing.
+3. [Gazebo](http://gazebosim.org/tutorials?tut=install_ubuntu)
+4. [RViz2](https://github.com/ros2/rviz): this is included as part of the rosdep dependecies.
 
 ## Build
 

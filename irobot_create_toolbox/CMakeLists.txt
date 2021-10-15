@@ -13,6 +13,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(control_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(irobot_create_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
@@ -21,6 +23,8 @@ find_package(rclpy REQUIRED)
 
 set(dependencies
   control_msgs
+  sensor_msgs
+  nav_msgs
   irobot_create_msgs
   rclcpp
 )
@@ -69,11 +73,23 @@ ament_target_dependencies(wheel_status_publisher_lib
   ${dependencies}
 )
 
+add_library(mock_publisher_lib SHARED)
+target_sources(
+  mock_publisher_lib
+  PRIVATE
+    src/mock_publisher.cpp
+)
+target_include_directories(mock_publisher_lib PUBLIC include)
+ament_target_dependencies(mock_publisher_lib
+  ${dependencies}
+)
+
 set(libraries_names
   hazard_publisher_lib
   ir_intensity_publisher_lib
   motion_control_lib
   wheel_status_publisher_lib
+  mock_publisher_lib
 )
 
 #### Executables
@@ -114,11 +130,21 @@ target_sources(
 )
 target_link_libraries(wheel_status_publisher_node wheel_status_publisher_lib)
 
+# Mock publisher
+add_executable(mock_publisher_node)
+target_sources(
+  mock_publisher_node
+  PRIVATE
+    src/mock_publisher_node.cpp
+)
+target_link_libraries(mock_publisher_node mock_publisher_lib)
+
 set(executables_names
   hazards_vector_publisher_node
   ir_intensity_vector_publisher_node
   motion_control
   wheel_status_publisher_node
+  mock_publisher_node
 )
 
 #### Install

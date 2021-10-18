@@ -142,6 +142,13 @@ MockPublisher::MockPublisher()
 void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
 {
   std::vector<irobot_create_msgs::msg::HazardDetection> hazard_vector = msg->detections;
+ if(hazard_vector.size())
+ {
+   for(int i = 0; i < hazard_vector.size(); i++)
+   {
+     std::cout<<hazard_vector[i]<<std::endl;
+   }
+ }
 }
 
 void MockPublisher::stop_callback(nav_msgs::msg::Odometry::SharedPtr msg)

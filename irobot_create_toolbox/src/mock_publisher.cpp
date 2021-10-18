@@ -45,7 +45,7 @@ MockPublisher::MockPublisher()
 
   // Define buttons publisher
   buttons_publisher_ = create_publisher<irobot_create_msgs::msg::InterfaceButtons>(
-    buttons_publisher_topic_, rclcpp::SensorDataQoS());
+    buttons_publisher_topic_, rclcpp::SystemDefaultsQoS());
   RCLCPP_INFO_STREAM(get_logger(), "Advertised topic: " << buttons_publisher_topic_);
 
   // Define slip status publisher
@@ -72,6 +72,7 @@ MockPublisher::MockPublisher()
   kidnap_status_subscription_ = create_subscription<irobot_create_msgs::msg::HazardDetectionVector>(
     hazard_subscription_topic, rclcpp::SensorDataQoS(), std::bind(&MockPublisher::kidnap_callback, this, std::placeholders::_1));
   RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << hazard_subscription_topic);
+
   // Subscription to the stop status
   stop_status_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
     wheel_vels_subscription_topic, rclcpp::SensorDataQoS(), std::bind(&MockPublisher::stop_callback, this, std::placeholders::_1));
@@ -142,13 +143,28 @@ MockPublisher::MockPublisher()
 void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
 {
   std::vector<irobot_create_msgs::msg::HazardDetection> hazard_vector = msg->detections;
- if(hazard_vector.size())
- {
-   for(int i = 0; i < hazard_vector.size(); i++)
-   {
-     std::cout<<hazard_vector[i]<<std::endl;
-   }
- }
+
+  if(hazard_vector.size())
+  {
+    bool cliff_status = true;
+    bool wheel_drop_status = true;
+    for(const irobot_create_msgs::msg::HazardDetection& detection : hazard_vector)
+    {
+      wheel_drop_status &= (int)detection.type == 4 ? true : false;
+      cliff_status &= (int)detection.type == 2 ? true : false;
+    }
+    kidnap_status_ = cliff_status && wheel_drop_status;
+  }
+  else{
+    kidnap_status_ = false;
+  }
+
+  // Set header timestamp.
+  this->kidnap_status_msg_.header.stamp = now();
+  // Set kidnap status.
+  this->kidnap_status_msg_.is_kidnapped = kidnap_status_;
+  // Publish topics
+  this->kidnap_status_publisher_->publish(this->kidnap_status_msg_);
 }
 
 void MockPublisher::stop_callback(nav_msgs::msg::Odometry::SharedPtr msg)
@@ -185,6 +201,6 @@ void MockPublisher::stop_callback(nav_msgs::msg::Odometry::SharedPtr msg)
 
 void MockPublisher::lightring_callback(irobot_create_msgs::msg::LightringLeds::SharedPtr msg)
 {
-  auto leds_vector = msg->leds;
+  (void)msg;
 }
 }  // namespace irobot_create_toolbox

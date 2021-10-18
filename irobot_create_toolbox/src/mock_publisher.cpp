@@ -16,6 +16,9 @@
 
 #include <irobot_create_toolbox/mock_publisher.hpp>
 
+#include <string>
+#include <vector>
+
 namespace irobot_create_toolbox
 {
 MockPublisher::MockPublisher()
@@ -26,9 +29,11 @@ MockPublisher::MockPublisher()
   // Topic parameter to publish slip status to
   slip_status_publisher_topic_ = declare_and_get_parameter<std::string>("slip_status_topic", this);
   // Topic parameter to publish kidnap status to
-  kidnap_status_publisher_topic_ = declare_and_get_parameter<std::string>("kidnap_status_topic", this);
+  kidnap_status_publisher_topic_ =
+    declare_and_get_parameter<std::string>("kidnap_status_topic", this);
   // Topic parameter to publish battery state to
-  battery_state_publisher_topic_ = declare_and_get_parameter<std::string>("battery_state_topic", this);
+  battery_state_publisher_topic_ =
+    declare_and_get_parameter<std::string>("battery_state_topic", this);
   // Topic parameter to publish stop status to
   stop_status_publisher_topic_ = declare_and_get_parameter<std::string>("stop_status_topic", this);
 
@@ -38,10 +43,14 @@ MockPublisher::MockPublisher()
   lightring_subscription_topic = declare_and_get_parameter<std::string>("lightring_topic", this);
 
   // Publish rate parameters
-  const double buttons_publish_rate = declare_and_get_parameter<double>("buttons_publish_rate", this);  // Hz
-  const double slip_status_publish_rate = declare_and_get_parameter<double>("slip_status_publish_rate", this);  // Hz
-  const double kidnap_status_publish_rate = declare_and_get_parameter<double>("kidnap_status_publish_rate", this);  // Hz
-  const double battery_state_publish_rate = declare_and_get_parameter<double>("battery_state_publish_rate", this);  // Hz
+  const double buttons_publish_rate =
+    declare_and_get_parameter<double>("buttons_publish_rate", this);  // Hz
+  const double slip_status_publish_rate =
+    declare_and_get_parameter<double>("slip_status_publish_rate", this);  // Hz
+  const double kidnap_status_publish_rate =
+    declare_and_get_parameter<double>("kidnap_status_publish_rate", this);  // Hz
+  const double battery_state_publish_rate =
+    declare_and_get_parameter<double>("battery_state_publish_rate", this);  // Hz
 
   // Define buttons publisher
   buttons_publisher_ = create_publisher<irobot_create_msgs::msg::InterfaceButtons>(
@@ -68,22 +77,26 @@ MockPublisher::MockPublisher()
     stop_status_publisher_topic_, rclcpp::SensorDataQoS());
   RCLCPP_INFO_STREAM(get_logger(), "Advertised topic: " << stop_status_publisher_topic_);
 
- // Subscription to the hazard detection vector
+  // Subscription to the hazard detection vector
   kidnap_status_subscription_ = create_subscription<irobot_create_msgs::msg::HazardDetectionVector>(
-    hazard_subscription_topic, rclcpp::SensorDataQoS(), std::bind(&MockPublisher::kidnap_callback, this, std::placeholders::_1));
+    hazard_subscription_topic, rclcpp::SensorDataQoS(),
+    std::bind(&MockPublisher::kidnap_callback, this, std::placeholders::_1));
   RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << hazard_subscription_topic);
 
   // Subscription to the stop status
   stop_status_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-    wheel_vels_subscription_topic, rclcpp::SensorDataQoS(), std::bind(&MockPublisher::stop_callback, this, std::placeholders::_1));
+    wheel_vels_subscription_topic, rclcpp::SensorDataQoS(),
+    std::bind(&MockPublisher::stop_callback, this, std::placeholders::_1));
   RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << wheel_vels_subscription_topic);
 
-   // Subscription to the lightring leds
+  // Subscription to the lightring leds
   lightring_subscription_ = create_subscription<irobot_create_msgs::msg::LightringLeds>(
-    lightring_subscription_topic, rclcpp::SensorDataQoS(), std::bind(&MockPublisher::lightring_callback, this, std::placeholders::_1));
+    lightring_subscription_topic, rclcpp::SensorDataQoS(),
+    std::bind(&MockPublisher::lightring_callback, this, std::placeholders::_1));
   RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << lightring_subscription_topic);
 
-  buttons_timer_ = create_wall_timer(std::chrono::duration<double>(1 / buttons_publish_rate), [this]() {
+  buttons_timer_ = create_wall_timer(
+    std::chrono::duration<double>(1 / buttons_publish_rate), [this]() {
     // Set header timestamp.
     this->buttons_msg_.header.stamp = now();
 
@@ -95,7 +108,8 @@ MockPublisher::MockPublisher()
     this->buttons_publisher_->publish(this->buttons_msg_);
   });
 
-  slip_status_timer_ = create_wall_timer(std::chrono::duration<double>(1 / slip_status_publish_rate), [this]() {
+  slip_status_timer_ = create_wall_timer(
+    std::chrono::duration<double>(1 / slip_status_publish_rate), [this]() {
     // Set header timestamp.
     this->slip_status_msg_.header.stamp = now();
 
@@ -103,7 +117,8 @@ MockPublisher::MockPublisher()
     this->slip_status_publisher_->publish(this->slip_status_msg_);
   });
 
-  kidnap_status_timer_ = create_wall_timer(std::chrono::duration<double>(1 / kidnap_status_publish_rate), [this]() {
+  kidnap_status_timer_ = create_wall_timer(
+    std::chrono::duration<double>(1 / kidnap_status_publish_rate), [this]() {
     // Set header timestamp.
     this->kidnap_status_msg_.header.stamp = now();
 
@@ -114,7 +129,8 @@ MockPublisher::MockPublisher()
     this->kidnap_status_publisher_->publish(this->kidnap_status_msg_);
   });
 
-  battery_state_timer_  = create_wall_timer(std::chrono::duration<double>(1 / battery_state_publish_rate), [this]() {
+  battery_state_timer_  = create_wall_timer(
+    std::chrono::duration<double>(1 / battery_state_publish_rate), [this]() {
     // Set header timestamp.
     this->battery_state_msg_.header.stamp = now();
 
@@ -144,8 +160,7 @@ void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVect
 {
   std::vector<irobot_create_msgs::msg::HazardDetection> hazard_vector = msg->detections;
 
-  if(hazard_vector.size())
-  {
+  if (hazard_vector.size()) {
     bool wheel_drop_left = false;
     bool wheel_drop_right = false;
     bool cliff_front_left = false;
@@ -153,38 +168,25 @@ void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVect
     bool cliff_side_left = false;
     bool cliff_side_right = false;
     // The robot is kidnap when the cliff sensors and the wheel drop are activated
-    for(const irobot_create_msgs::msg::HazardDetection& detection : hazard_vector)
-    {
-      if(detection.header.frame_id == "wheel_drop_left")
-      {
+    for (const irobot_create_msgs::msg::HazardDetection& detection : hazard_vector) {
+      if (detection.header.frame_id == "wheel_drop_left") {
         wheel_drop_left = true;
-      }
-      else if(detection.header.frame_id == "wheel_drop_right")
-      {
+      } else if (detection.header.frame_id == "wheel_drop_right") {
         wheel_drop_right = true;
-      }
-      else if(detection.header.frame_id == "cliff_front_left")
-      {
+      } else if (detection.header.frame_id == "cliff_front_left") {
         cliff_front_left = true;
-      }
-      else if(detection.header.frame_id == "cliff_front_right")
-      {
+      } else if (detection.header.frame_id == "cliff_front_right") {
         cliff_front_right = true;
-      }
-      else if(detection.header.frame_id == "cliff_side_left")
-      {
+      } else if (detection.header.frame_id == "cliff_side_left") {
         cliff_side_left = true;
-      }
-      else if(detection.header.frame_id == "cliff_side_right")
-      {
+      } else if (detection.header.frame_id == "cliff_side_right") {
         cliff_side_right = true;
       }
     }
 
     kidnap_status_ = wheel_drop_left && wheel_drop_right && cliff_front_left &&
                      cliff_front_right && cliff_side_left && cliff_side_right;
-  }
-  else{
+  } else {
     kidnap_status_ = false;
   }
 
@@ -200,11 +202,12 @@ void MockPublisher::stop_callback(nav_msgs::msg::Odometry::SharedPtr msg)
 {
   auto position = msg->pose.pose.position;
   auto orientation = msg->pose.pose.orientation;
+  const float tol = 0.00001;
 
-  if(abs(position.x-pose_x)<0.00001 && abs(position.y-pose_y)<0.00001 && abs(position.z-pose_z)<0.00001 &&
-     abs(orientation.x-orientation_x)<0.00001 && abs(orientation.y-orientation_y)<0.00001 &&
-     abs(orientation.z-orientation_z)<0.00001 && abs(orientation.w-orientation_w)<0.00001)
-  {
+  if (abs(position.x-pose_x) < tol && abs(position.y-pose_y) < tol &&
+      abs(position.z-pose_z) < tol && abs(orientation.x-orientation_x) < tol &&
+      abs(orientation.y-orientation_y) < tol && abs(orientation.z-orientation_z) < tol &&
+      abs(orientation.w-orientation_w) < tol) {
     stop_status_ = true;
   } else {
     stop_status_ = false;

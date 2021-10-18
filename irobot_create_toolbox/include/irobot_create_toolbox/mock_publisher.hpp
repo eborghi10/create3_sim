@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <sensor_msgs/msg/battery_state.hpp>
 #include <irobot_create_msgs/msg/button.hpp>
 #include <irobot_create_msgs/msg/hazard_detection.hpp>
@@ -30,14 +33,13 @@
 #include <irobot_create_msgs/msg/wheel_vels.hpp>
 #include <irobot_create_toolbox/parameter_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <string>
-#include <vector>
+
 
 namespace irobot_create_toolbox
 {
 class MockPublisher : public rclcpp::Node
 {
-public:
+ public:
   /// \brief Constructor
   MockPublisher();
 
@@ -46,7 +48,7 @@ public:
   void stop_callback(nav_msgs::msg::Odometry::SharedPtr msg);
   void lightring_callback(irobot_create_msgs::msg::LightringLeds::SharedPtr msg);
 
-protected:
+ protected:
   // Publish aggregated detections on timer_'s frequency
   rclcpp::TimerBase::SharedPtr buttons_timer_;
   rclcpp::TimerBase::SharedPtr slip_status_timer_;
@@ -55,14 +57,16 @@ protected:
   rclcpp::TimerBase::SharedPtr stop_status_timer_;
 
   // Publishers
-  std::shared_ptr<rclcpp::Publisher<irobot_create_msgs::msg::InterfaceButtons>> buttons_publisher_;
+  std::shared_ptr<
+    rclcpp::Publisher<irobot_create_msgs::msg::InterfaceButtons>> buttons_publisher_;
   rclcpp::Publisher<irobot_create_msgs::msg::SlipStatus>::SharedPtr slip_status_publisher_;
   rclcpp::Publisher<irobot_create_msgs::msg::KidnapStatus>::SharedPtr kidnap_status_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::BatteryState>::SharedPtr battery_state_publisher_;
   rclcpp::Publisher<irobot_create_msgs::msg::StopStatus>::SharedPtr stop_status_publisher_;
 
   // Subscribers
-  rclcpp::Subscription<irobot_create_msgs::msg::HazardDetectionVector>::SharedPtr kidnap_status_subscription_;
+  rclcpp::Subscription<
+    irobot_create_msgs::msg::HazardDetectionVector>::SharedPtr kidnap_status_subscription_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr stop_status_subscription_;
   rclcpp::Subscription<irobot_create_msgs::msg::LightringLeds>::SharedPtr lightring_subscription_;
 
@@ -75,7 +79,7 @@ protected:
   std::string kidnap_status_publisher_topic_;
   // Topic to publish battery state to
   std::string battery_state_publisher_topic_;
-   // Topic to publish stop status to
+  // Topic to publish stop status to
   std::string stop_status_publisher_topic_;
 
   // Topic to subscribe to hazard detection vector

@@ -146,14 +146,43 @@ void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVect
 
   if(hazard_vector.size())
   {
-    bool cliff_status = true;
-    bool wheel_drop_status = true;
+    bool wheel_drop_left = false;
+    bool wheel_drop_right = false;
+    bool cliff_front_left = false;
+    bool cliff_front_right = false;
+    bool cliff_side_left = false;
+    bool cliff_side_right = false;
+    // The robot is kidnap when the cliff sensors and the wheel drop are activated
     for(const irobot_create_msgs::msg::HazardDetection& detection : hazard_vector)
     {
-      wheel_drop_status &= (int)detection.type == 4 ? true : false;
-      cliff_status &= (int)detection.type == 2 ? true : false;
+      if(detection.header.frame_id == "wheel_drop_left")
+      {
+        wheel_drop_left = true;
+      }
+      else if(detection.header.frame_id == "wheel_drop_right")
+      {
+        wheel_drop_right = true;
+      }
+      else if(detection.header.frame_id == "cliff_front_left")
+      {
+        cliff_front_left = true;
+      }
+      else if(detection.header.frame_id == "cliff_front_right")
+      {
+        cliff_front_right = true;
+      }
+      else if(detection.header.frame_id == "cliff_side_left")
+      {
+        cliff_side_left = true;
+      }
+      else if(detection.header.frame_id == "cliff_side_right")
+      {
+        cliff_side_right = true;
+      }
     }
-    kidnap_status_ = cliff_status && wheel_drop_status;
+
+    kidnap_status_ = wheel_drop_left && wheel_drop_right && cliff_front_left &&
+                     cliff_front_right && cliff_side_left && cliff_side_right;
   }
   else{
     kidnap_status_ = false;

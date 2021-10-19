@@ -101,37 +101,37 @@ MockPublisher::MockPublisher()
 
   buttons_timer_ = create_wall_timer(
     std::chrono::duration<double>(1 / buttons_publish_rate), [this]() {
-    // Set header timestamp.
-    this->buttons_msg_.header.stamp = now();
+      // Set header timestamp.
+      this->buttons_msg_.header.stamp = now();
 
-    this->buttons_msg_.button_1.header.stamp = now();
-    this->buttons_msg_.button_power.header.stamp = now();
-    this->buttons_msg_.button_2.header.stamp = now();
+      this->buttons_msg_.button_1.header.stamp = now();
+      this->buttons_msg_.button_power.header.stamp = now();
+      this->buttons_msg_.button_2.header.stamp = now();
 
-    // Publish topics
-    this->buttons_publisher_->publish(this->buttons_msg_);
-  });
+      // Publish topics
+      this->buttons_publisher_->publish(this->buttons_msg_);
+    });
 
   slip_status_timer_ = create_wall_timer(
     std::chrono::duration<double>(1 / slip_status_publish_rate), [this]() {
-    // Set header timestamp.
-    this->slip_status_msg_.header.stamp = now();
+      // Set header timestamp.
+      this->slip_status_msg_.header.stamp = now();
 
-    // Publish topics
-    this->slip_status_publisher_->publish(this->slip_status_msg_);
-  });
+      // Publish topics
+      this->slip_status_publisher_->publish(this->slip_status_msg_);
+    });
 
-  battery_state_timer_  = create_wall_timer(
+  battery_state_timer_ = create_wall_timer(
     std::chrono::duration<double>(1 / battery_state_publish_rate), [this]() {
-    // Set header timestamp.
-    this->battery_state_msg_.header.stamp = now();
+      // Set header timestamp.
+      this->battery_state_msg_.header.stamp = now();
 
-    // The battery percentage goes from zero to one, one meaning that the battery is full.
-    this->battery_state_msg_.percentage = 1;
+      // The battery percentage goes from zero to one, one meaning that the battery is full.
+      this->battery_state_msg_.percentage = 1;
 
-    // Publish topics
-    this->battery_state_publisher_->publish(this->battery_state_msg_);
-  });
+      // Publish topics
+      this->battery_state_publisher_->publish(this->battery_state_msg_);
+    });
 
   // Set buttons header
   this->buttons_msg_.header.frame_id = "base_link";
@@ -154,13 +154,28 @@ MockPublisher::MockPublisher()
   this->stop_status_msg_.header.frame_id = "base_link";
 }
 
-void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr
-                                      /*msg*/)
+void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
 {
+  std::vector<irobot_create_msgs::msg::HazardDetection> hazard_vector = msg->detections;
+
+  bool wheel_drop_left = false;
+  bool wheel_drop_right = false;
+
+  for (const auto & detection : hazard_vector) {
+    if (detection.header.frame_id == "wheel_drop_left") {
+      wheel_drop_left = true;
+    } else if (detection.header.frame_id == "wheel_drop_right") {
+      wheel_drop_right = true;
+    }
+  }
+
+  // The robot is kidnap when the cliff sensors and the wheel drop are activated
+  bool kidnap_status_ = wheel_drop_left && wheel_drop_right;
+
   // Set header timestamp.
   this->kidnap_status_msg_.header.stamp = now();
   // Set kidnap status.
-  this->kidnap_status_msg_.is_kidnapped = false;
+  this->kidnap_status_msg_.is_kidnapped = kidnap_status_;
   // Publish topics
   this->kidnap_status_publisher_->publish(this->kidnap_status_msg_);
 }

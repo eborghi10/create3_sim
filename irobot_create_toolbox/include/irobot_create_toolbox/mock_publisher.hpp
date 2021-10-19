@@ -42,7 +42,7 @@ namespace irobot_create_toolbox
 {
 class MockPublisher : public rclcpp::Node
 {
- public:
+public:
   /// \brief Constructor
   MockPublisher();
 
@@ -51,7 +51,7 @@ class MockPublisher : public rclcpp::Node
   void stop_callback(nav_msgs::msg::Odometry::SharedPtr msg);
   void lightring_callback(irobot_create_msgs::msg::LightringLeds::SharedPtr msg);
 
- protected:
+protected:
   // Publish aggregated detections on timer_'s frequency
   rclcpp::TimerBase::SharedPtr buttons_timer_;
   rclcpp::TimerBase::SharedPtr slip_status_timer_;

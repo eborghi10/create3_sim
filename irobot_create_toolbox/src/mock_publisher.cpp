@@ -154,27 +154,12 @@ MockPublisher::MockPublisher()
   this->stop_status_msg_.header.frame_id = "base_link";
 }
 
-void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
+void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr /*msg*/)
 {
-  std::vector<irobot_create_msgs::msg::HazardDetection> hazard_vector = msg->detections;
-
-  bool wheel_drop_left = false;
-  bool wheel_drop_right = false;
-
-  for (const auto& detection : hazard_vector) {
-    if (detection.header.frame_id == "wheel_drop_left") {
-      wheel_drop_left = true;
-    } else if (detection.header.frame_id == "wheel_drop_right") {
-      wheel_drop_right = true;}
-  }
-
-  // The robot is kidnap when the cliff sensors and the wheel drop are activated
-  bool kidnap_status_ = wheel_drop_left && wheel_drop_right;
-
   // Set header timestamp.
   this->kidnap_status_msg_.header.stamp = now();
   // Set kidnap status.
-  this->kidnap_status_msg_.is_kidnapped = kidnap_status_;
+  this->kidnap_status_msg_.is_kidnapped = false;
   // Publish topics
   this->kidnap_status_publisher_->publish(this->kidnap_status_msg_);
 }

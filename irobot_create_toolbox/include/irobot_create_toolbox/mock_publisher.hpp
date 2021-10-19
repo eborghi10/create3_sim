@@ -107,7 +107,6 @@ class MockPublisher : public rclcpp::Node
 
   geometry_msgs::msg::Pose prev_position;
 
-  bool kidnap_status_{false};
   float position_tol{0};
 };
 

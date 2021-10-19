@@ -87,11 +87,11 @@ protected:
   std::string stop_status_publisher_topic_;
 
   // Topic to subscribe to hazard detection vector
-  std::string hazard_subscription_topic;
+  std::string hazard_subscription_topic_;
   // Topic to subscribe to wheel vels vector
-  std::string wheel_vels_subscription_topic;
+  std::string wheel_vels_subscription_topic_;
   // Topic to subscribe to light ring vector
-  std::string lightring_subscription_topic;
+  std::string lightring_subscription_topic_;
 
   // Message to store the interface buttons
   irobot_create_msgs::msg::InterfaceButtons buttons_msg_;
@@ -104,9 +104,8 @@ protected:
   // Message to store the stop status
   irobot_create_msgs::msg::StopStatus stop_status_msg_;
 
-  geometry_msgs::msg::Pose prev_position;
-
-  float position_tol{0};
+  float linear_velocity_tolerance{0};
+  float angular_velocity_tolerance{0};
 };
 
 }  // namespace irobot_create_toolbox

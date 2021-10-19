@@ -38,9 +38,9 @@ MockPublisher::MockPublisher()
   stop_status_publisher_topic_ = declare_and_get_parameter<std::string>("stop_status_topic", this);
 
   // Subscriber topics
-  hazard_subscription_topic = declare_and_get_parameter<std::string>("hazard_topic", this);
-  wheel_vels_subscription_topic = declare_and_get_parameter<std::string>("wheel_vels_topic", this);
-  lightring_subscription_topic = declare_and_get_parameter<std::string>("lightring_topic", this);
+  hazard_subscription_topic_ = declare_and_get_parameter<std::string>("hazard_topic", this);
+  wheel_vels_subscription_topic_ = declare_and_get_parameter<std::string>("wheel_vels_topic", this);
+  lightring_subscription_topic_ = declare_and_get_parameter<std::string>("lightring_topic", this);
 
   // Publish rate parameters
   const double buttons_publish_rate =
@@ -50,11 +50,9 @@ MockPublisher::MockPublisher()
   const double battery_state_publish_rate =
     declare_and_get_parameter<double>("battery_state_publish_rate", this);  // Hz
 
-  // Sets the values of the initial position
-  prev_position.position.x = 0;
-  prev_position.position.y = 0;
-  prev_position.orientation.y = 0;
-  position_tol = declare_and_get_parameter<float>("position_tolerance", this);
+  // Sets the velocity tolerance
+  linear_velocity_tolerance = declare_and_get_parameter<float>("linear_velocity_tolerance", this);
+  angular_velocity_tolerance = declare_and_get_parameter<float>("angular_velocity_tolerance", this);
 
   // Define buttons publisher
   buttons_publisher_ = create_publisher<irobot_create_msgs::msg::InterfaceButtons>(
@@ -83,21 +81,27 @@ MockPublisher::MockPublisher()
 
   // Subscription to the hazard detection vector
   kidnap_status_subscription_ = create_subscription<irobot_create_msgs::msg::HazardDetectionVector>(
-    hazard_subscription_topic, rclcpp::SensorDataQoS(),
+    hazard_subscription_topic_, rclcpp::SensorDataQoS(),
     std::bind(&MockPublisher::kidnap_callback, this, std::placeholders::_1));
-  RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << hazard_subscription_topic);
+  RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << hazard_subscription_topic_);
+
+  // Set kidnap status header
+  this->kidnap_status_msg_.header.frame_id = "base_link";
 
   // Subscription to the stop status
   stop_status_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-    wheel_vels_subscription_topic, rclcpp::SensorDataQoS(),
+    wheel_vels_subscription_topic_, rclcpp::SensorDataQoS(),
     std::bind(&MockPublisher::stop_callback, this, std::placeholders::_1));
-  RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << wheel_vels_subscription_topic);
+  RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << wheel_vels_subscription_topic_);
+
+  // Set stop status header
+  this->stop_status_msg_.header.frame_id = "base_link";
 
   // Subscription to the lightring leds
   lightring_subscription_ = create_subscription<irobot_create_msgs::msg::LightringLeds>(
-    lightring_subscription_topic, rclcpp::SensorDataQoS(),
+    lightring_subscription_topic_, rclcpp::SensorDataQoS(),
     std::bind(&MockPublisher::lightring_callback, this, std::placeholders::_1));
-  RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << lightring_subscription_topic);
+  RCLCPP_INFO_STREAM(get_logger(), "Subscription to topic: " << lightring_subscription_topic_);
 
   buttons_timer_ = create_wall_timer(
     std::chrono::duration<double>(1 / buttons_publish_rate), [this]() {
@@ -112,6 +116,13 @@ MockPublisher::MockPublisher()
       this->buttons_publisher_->publish(this->buttons_msg_);
     });
 
+  // Set buttons header
+  this->buttons_msg_.header.frame_id = "base_link";
+  this->buttons_msg_.button_1.header.frame_id = "button_1";
+  this->buttons_msg_.button_power.header.frame_id = "button_power";
+  this->buttons_msg_.button_2.header.frame_id = "button_2";
+
+
   slip_status_timer_ = create_wall_timer(
     std::chrono::duration<double>(1 / slip_status_publish_rate), [this]() {
       // Set header timestamp.
@@ -120,6 +131,11 @@ MockPublisher::MockPublisher()
       // Publish topics
       this->slip_status_publisher_->publish(this->slip_status_msg_);
     });
+
+  // Set slip status header
+  this->slip_status_msg_.header.frame_id = "base_link";
+  // Set slip status status
+  this->slip_status_msg_.is_slipping = false;
 
   battery_state_timer_ = create_wall_timer(
     std::chrono::duration<double>(1 / battery_state_publish_rate), [this]() {
@@ -133,25 +149,8 @@ MockPublisher::MockPublisher()
       this->battery_state_publisher_->publish(this->battery_state_msg_);
     });
 
-  // Set buttons header
-  this->buttons_msg_.header.frame_id = "base_link";
-  this->buttons_msg_.button_1.header.frame_id = "button_1";
-  this->buttons_msg_.button_power.header.frame_id = "button_power";
-  this->buttons_msg_.button_2.header.frame_id = "button_2";
-
-  // Set slip status header
-  this->slip_status_msg_.header.frame_id = "base_link";
-  // Set slip status status
-  this->slip_status_msg_.is_slipping = false;
-
   // Set battery state header
   this->battery_state_msg_.header.frame_id = "base_link";
-
-  // Set kidnap status header
-  this->kidnap_status_msg_.header.frame_id = "base_link";
-
-  // Set stop status header
-  this->stop_status_msg_.header.frame_id = "base_link";
 }
 
 void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
@@ -169,39 +168,30 @@ void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVect
     }
   }
 
-  // The robot is kidnap when the cliff sensors and the wheel drop are activated
-  bool kidnap_status_ = wheel_drop_left && wheel_drop_right;
-
   // Set header timestamp.
-  this->kidnap_status_msg_.header.stamp = now();
-  // Set kidnap status.
-  this->kidnap_status_msg_.is_kidnapped = kidnap_status_;
+  kidnap_status_msg_.header.stamp = now();
+  // Set kidnap status. The robot is kidnapped when both wheel drops are activated
+  kidnap_status_msg_.is_kidnapped = wheel_drop_left && wheel_drop_right;
   // Publish topics
-  this->kidnap_status_publisher_->publish(this->kidnap_status_msg_);
+  kidnap_status_publisher_->publish(this->kidnap_status_msg_);
 }
 
 void MockPublisher::stop_callback(nav_msgs::msg::Odometry::SharedPtr msg)
 {
-  const auto position = msg->pose.pose.position;
-  const auto orientation = msg->pose.pose.orientation;
+  const auto linear_velocity = msg->twist.twist.linear;
+  const auto angular_velocity = msg->twist.twist.angular;
 
-  bool cond_x = abs(position.x - prev_position.position.x) < position_tol;
-  bool cond_y = abs(position.y - prev_position.position.y) < position_tol;
-  bool cond_yaw = abs(orientation.y - prev_position.orientation.y) < position_tol;
-
-  bool stop_status_ = cond_x && cond_y && cond_yaw;
-
-  // Updates the value of the position
-  prev_position.position.x = position.x;
-  prev_position.position.y = position.y;
-  prev_position.orientation.y = orientation.y;
+  const bool cond_linear_velocity = abs(linear_velocity.x) < linear_velocity_tolerance;
+  const bool cond_angular_velocity = abs(angular_velocity.z) < angular_velocity_tolerance;
 
   // Set header timestamp.
-  this->stop_status_msg_.header.stamp = now();
-  this->stop_status_msg_.is_stopped = stop_status_;
+  stop_status_msg_.header.stamp = now();
+  // Set stop status. The robot is stopped when both linear and angular velocity
+  // are almost zero.
+  stop_status_msg_.is_stopped = cond_linear_velocity && cond_angular_velocity;
 
   // Publish topics
-  this->stop_status_publisher_->publish(this->stop_status_msg_);
+  stop_status_publisher_->publish(this->stop_status_msg_);
 }
 
 void MockPublisher::lightring_callback(irobot_create_msgs::msg::LightringLeds::SharedPtr /*msg*/)

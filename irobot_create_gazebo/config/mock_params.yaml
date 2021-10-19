@@ -22,4 +22,5 @@ mock_publisher_node:
     wheel_vels_topic: /odom
     lightring_topic: /cmd_lightring
     # Stop status position difference tolerance
-    position_tolerance: 0.00001
+    linear_velocity_tolerance: 0.01
+    angular_velocity_tolerance: 0.1

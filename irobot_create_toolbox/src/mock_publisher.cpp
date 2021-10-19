@@ -47,8 +47,6 @@ MockPublisher::MockPublisher()
     declare_and_get_parameter<double>("buttons_publish_rate", this);  // Hz
   const double slip_status_publish_rate =
     declare_and_get_parameter<double>("slip_status_publish_rate", this);  // Hz
-  const double kidnap_status_publish_rate =
-    declare_and_get_parameter<double>("kidnap_status_publish_rate", this);  // Hz
   const double battery_state_publish_rate =
     declare_and_get_parameter<double>("battery_state_publish_rate", this);  // Hz
 
@@ -122,18 +120,6 @@ MockPublisher::MockPublisher()
     this->slip_status_publisher_->publish(this->slip_status_msg_);
   });
 
-  kidnap_status_timer_ = create_wall_timer(
-    std::chrono::duration<double>(1 / kidnap_status_publish_rate), [this]() {
-    // Set header timestamp.
-    this->kidnap_status_msg_.header.stamp = now();
-
-    // Set kidnap status.
-    this->kidnap_status_msg_.is_kidnapped = kidnap_status_;
-
-    // Publish topics
-    this->kidnap_status_publisher_->publish(this->kidnap_status_msg_);
-  });
-
   battery_state_timer_  = create_wall_timer(
     std::chrono::duration<double>(1 / battery_state_publish_rate), [this]() {
     // Set header timestamp.
@@ -173,30 +159,16 @@ void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVect
 
   bool wheel_drop_left = false;
   bool wheel_drop_right = false;
-  bool cliff_front_left = false;
-  bool cliff_front_right = false;
-  bool cliff_side_left = false;
-  bool cliff_side_right = false;
 
   for (const auto& detection : hazard_vector) {
     if (detection.header.frame_id == "wheel_drop_left") {
       wheel_drop_left = true;
     } else if (detection.header.frame_id == "wheel_drop_right") {
-      wheel_drop_right = true;
-    } else if (detection.header.frame_id == "cliff_front_left") {
-      cliff_front_left = true;
-    } else if (detection.header.frame_id == "cliff_front_right") {
-      cliff_front_right = true;
-    } else if (detection.header.frame_id == "cliff_side_left") {
-      cliff_side_left = true;
-    } else if (detection.header.frame_id == "cliff_side_right") {
-      cliff_side_right = true;
-    }
+      wheel_drop_right = true;}
   }
 
   // The robot is kidnap when the cliff sensors and the wheel drop are activated
-  kidnap_status_ = wheel_drop_left && wheel_drop_right && cliff_front_left &&
-                    cliff_front_right && cliff_side_left && cliff_side_right;
+  bool kidnap_status_ = wheel_drop_left && wheel_drop_right;
 
   // Set header timestamp.
   this->kidnap_status_msg_.header.stamp = now();

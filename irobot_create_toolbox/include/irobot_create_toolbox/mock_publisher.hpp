@@ -107,7 +107,7 @@ class MockPublisher : public rclcpp::Node
 
   geometry_msgs::msg::Pose prev_position;
 
-  bool kidnap_status_{false};
+  // bool kidnap_status_{false};
 };
 
 }  // namespace irobot_create_toolbox

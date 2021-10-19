@@ -15,6 +15,7 @@
 // @author Lola Segura (lsegura@irobot.com)
 
 #include <irobot_create_toolbox/mock_publisher.hpp>
+#include <memory>
 
 int main(int argc, char * argv[])
 {

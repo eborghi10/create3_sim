@@ -14,13 +14,9 @@
 //
 // @author Lola Segura (lsegura@irobot.com)
 
-#pragma once
+#ifndef IROBOT_CREATE_TOOLBOX__MOCK_PUBLISHER_HPP_
+#define IROBOT_CREATE_TOOLBOX__MOCK_PUBLISHER_HPP_
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include <irobot_create_toolbox/parameter_helper.hpp>
 #include <irobot_create_msgs/msg/button.hpp>
 #include <irobot_create_msgs/msg/hazard_detection.hpp>
 #include <irobot_create_msgs/msg/hazard_detection_vector.hpp>
@@ -31,13 +27,16 @@
 #include <irobot_create_msgs/msg/slip_status.hpp>
 #include <irobot_create_msgs/msg/stop_status.hpp>
 #include <irobot_create_msgs/msg/wheel_vels.hpp>
+#include <irobot_create_toolbox/parameter_helper.hpp>
 
 #include <rclcpp/rclcpp.hpp>
-
 #include <sensor_msgs/msg/battery_state.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace irobot_create_toolbox
 {
@@ -111,3 +110,5 @@ class MockPublisher : public rclcpp::Node
 };
 
 }  // namespace irobot_create_toolbox
+
+#endif  // IROBOT_CREATE_TOOLBOX__MOCK_PUBLISHER_HPP_

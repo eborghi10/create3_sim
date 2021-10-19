@@ -154,7 +154,8 @@ MockPublisher::MockPublisher()
   this->stop_status_msg_.header.frame_id = "base_link";
 }
 
-void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr /*msg*/)
+void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr
+                                      /*msg*/)
 {
   // Set header timestamp.
   this->kidnap_status_msg_.header.stamp = now();

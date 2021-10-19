@@ -155,7 +155,7 @@ def generate_launch_description():
     )
 
     # Publish wheel status
-    mock_node = Node(
+    mock_topics_node = Node(
         package='irobot_create_toolbox',
         name='mock_publisher_node',
         executable='mock_publisher_node',
@@ -178,6 +178,6 @@ def generate_launch_description():
     ld.add_action(ir_intensity_vector_node)
     ld.add_action(motion_control_node)
     ld.add_action(wheel_status_node)
-    ld.add_action(mock_node)
+    ld.add_action(mock_topics_node)
 
     return ld

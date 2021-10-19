@@ -54,6 +54,7 @@ MockPublisher::MockPublisher()
   prev_position.position.x = 0;
   prev_position.position.y = 0;
   prev_position.orientation.y = 0;
+  position_tol = declare_and_get_parameter<float>("position_tolerance", this);
 
   // Define buttons publisher
   buttons_publisher_ = create_publisher<irobot_create_msgs::msg::InterfaceButtons>(
@@ -182,11 +183,10 @@ void MockPublisher::stop_callback(nav_msgs::msg::Odometry::SharedPtr msg)
 {
   const auto position = msg->pose.pose.position;
   const auto orientation = msg->pose.pose.orientation;
-  const float tol = 0.00001;
 
-  bool cond_x = abs(position.x - prev_position.position.x) < tol;
-  bool cond_y = abs(position.y - prev_position.position.y) < tol;
-  bool cond_yaw = abs(orientation.y - prev_position.orientation.y) < tol;
+  bool cond_x = abs(position.x - prev_position.position.x) < position_tol;
+  bool cond_y = abs(position.y - prev_position.position.y) < position_tol;
+  bool cond_yaw = abs(orientation.y - prev_position.orientation.y) < position_tol;
 
   bool stop_status_ = cond_x && cond_y && cond_yaw;
 

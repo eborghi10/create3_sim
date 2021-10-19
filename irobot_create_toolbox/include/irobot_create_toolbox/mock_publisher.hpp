@@ -20,10 +20,7 @@
 #include <string>
 #include <vector>
 
-#include <sensor_msgs/msg/battery_state.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-
+#include <irobot_create_toolbox/parameter_helper.hpp>
 #include <irobot_create_msgs/msg/button.hpp>
 #include <irobot_create_msgs/msg/hazard_detection.hpp>
 #include <irobot_create_msgs/msg/hazard_detection_vector.hpp>
@@ -34,9 +31,12 @@
 #include <irobot_create_msgs/msg/slip_status.hpp>
 #include <irobot_create_msgs/msg/stop_status.hpp>
 #include <irobot_create_msgs/msg/wheel_vels.hpp>
-#include <irobot_create_toolbox/parameter_helper.hpp>
 
 #include <rclcpp/rclcpp.hpp>
+
+#include <sensor_msgs/msg/battery_state.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 
 namespace irobot_create_toolbox
@@ -107,7 +107,8 @@ class MockPublisher : public rclcpp::Node
 
   geometry_msgs::msg::Pose prev_position;
 
-  // bool kidnap_status_{false};
+  bool kidnap_status_{false};
+  float position_tol{0};
 };
 
 }  // namespace irobot_create_toolbox

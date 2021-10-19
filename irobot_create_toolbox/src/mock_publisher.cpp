@@ -52,30 +52,35 @@ MockPublisher::MockPublisher()
   const double battery_state_publish_rate =
     declare_and_get_parameter<double>("battery_state_publish_rate", this);  // Hz
 
+  // Sets the values of the initial position
+  prev_position.position.x = 0;
+  prev_position.position.y = 0;
+  prev_position.orientation.y = 0;
+
   // Define buttons publisher
   buttons_publisher_ = create_publisher<irobot_create_msgs::msg::InterfaceButtons>(
     buttons_publisher_topic_, rclcpp::SystemDefaultsQoS());
-  RCLCPP_INFO_STREAM(get_logger(), "Advertised topic: " << buttons_publisher_topic_);
+  RCLCPP_INFO_STREAM(get_logger(), "Advertised mocked topic: " << buttons_publisher_topic_);
 
   // Define slip status publisher
   slip_status_publisher_ = create_publisher<irobot_create_msgs::msg::SlipStatus>(
     slip_status_publisher_topic_, rclcpp::SensorDataQoS());
-  RCLCPP_INFO_STREAM(get_logger(), "Advertised topic: " << slip_status_publisher_topic_);
+  RCLCPP_INFO_STREAM(get_logger(), "Advertised mocked topic: " << slip_status_publisher_topic_);
 
   // Define kidnap status publisher
   kidnap_status_publisher_ = create_publisher<irobot_create_msgs::msg::KidnapStatus>(
     kidnap_status_publisher_topic_, rclcpp::SensorDataQoS());
-  RCLCPP_INFO_STREAM(get_logger(), "Advertised topic: " << kidnap_status_publisher_topic_);
+  RCLCPP_INFO_STREAM(get_logger(), "Advertised mocked topic: " << kidnap_status_publisher_topic_);
 
   // Define battery state publisher
   battery_state_publisher_ = create_publisher<sensor_msgs::msg::BatteryState>(
     battery_state_publisher_topic_, rclcpp::SensorDataQoS());
-  RCLCPP_INFO_STREAM(get_logger(), "Advertised topic: " << battery_state_publisher_topic_);
+  RCLCPP_INFO_STREAM(get_logger(), "Advertised mocked topic: " << battery_state_publisher_topic_);
 
   // Define stop status publisher
   stop_status_publisher_ = create_publisher<irobot_create_msgs::msg::StopStatus>(
     stop_status_publisher_topic_, rclcpp::SensorDataQoS());
-  RCLCPP_INFO_STREAM(get_logger(), "Advertised topic: " << stop_status_publisher_topic_);
+  RCLCPP_INFO_STREAM(get_logger(), "Advertised mocked topic: " << stop_status_publisher_topic_);
 
   // Subscription to the hazard detection vector
   kidnap_status_subscription_ = create_subscription<irobot_create_msgs::msg::HazardDetectionVector>(
@@ -134,6 +139,7 @@ MockPublisher::MockPublisher()
     // Set header timestamp.
     this->battery_state_msg_.header.stamp = now();
 
+    // The battery percentage goes from zero to one, one meaning that the battery is full.
     this->battery_state_msg_.percentage = 1;
 
     // Publish topics
@@ -145,50 +151,52 @@ MockPublisher::MockPublisher()
   this->buttons_msg_.button_1.header.frame_id = "button_1";
   this->buttons_msg_.button_power.header.frame_id = "button_power";
   this->buttons_msg_.button_2.header.frame_id = "button_2";
-  // Set buttons pressed state
-  this->buttons_msg_.button_1.is_pressed = false;
-  this->buttons_msg_.button_power.is_pressed = false;
-  this->buttons_msg_.button_2.is_pressed = false;
 
   // Set slip status header
   this->slip_status_msg_.header.frame_id = "base_link";
   // Set slip status status
   this->slip_status_msg_.is_slipping = false;
+
+  // Set battery state header
+  this->battery_state_msg_.header.frame_id = "base_link";
+
+  // Set kidnap status header
+  this->kidnap_status_msg_.header.frame_id = "base_link";
+
+  // Set stop status header
+  this->stop_status_msg_.header.frame_id = "base_link";
 }
 
 void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVector::SharedPtr msg)
 {
   std::vector<irobot_create_msgs::msg::HazardDetection> hazard_vector = msg->detections;
 
-  if (hazard_vector.size()) {
-    bool wheel_drop_left = false;
-    bool wheel_drop_right = false;
-    bool cliff_front_left = false;
-    bool cliff_front_right = false;
-    bool cliff_side_left = false;
-    bool cliff_side_right = false;
-    // The robot is kidnap when the cliff sensors and the wheel drop are activated
-    for (const irobot_create_msgs::msg::HazardDetection& detection : hazard_vector) {
-      if (detection.header.frame_id == "wheel_drop_left") {
-        wheel_drop_left = true;
-      } else if (detection.header.frame_id == "wheel_drop_right") {
-        wheel_drop_right = true;
-      } else if (detection.header.frame_id == "cliff_front_left") {
-        cliff_front_left = true;
-      } else if (detection.header.frame_id == "cliff_front_right") {
-        cliff_front_right = true;
-      } else if (detection.header.frame_id == "cliff_side_left") {
-        cliff_side_left = true;
-      } else if (detection.header.frame_id == "cliff_side_right") {
-        cliff_side_right = true;
-      }
-    }
+  bool wheel_drop_left = false;
+  bool wheel_drop_right = false;
+  bool cliff_front_left = false;
+  bool cliff_front_right = false;
+  bool cliff_side_left = false;
+  bool cliff_side_right = false;
 
-    kidnap_status_ = wheel_drop_left && wheel_drop_right && cliff_front_left &&
-                     cliff_front_right && cliff_side_left && cliff_side_right;
-  } else {
-    kidnap_status_ = false;
+  for (const auto& detection : hazard_vector) {
+    if (detection.header.frame_id == "wheel_drop_left") {
+      wheel_drop_left = true;
+    } else if (detection.header.frame_id == "wheel_drop_right") {
+      wheel_drop_right = true;
+    } else if (detection.header.frame_id == "cliff_front_left") {
+      cliff_front_left = true;
+    } else if (detection.header.frame_id == "cliff_front_right") {
+      cliff_front_right = true;
+    } else if (detection.header.frame_id == "cliff_side_left") {
+      cliff_side_left = true;
+    } else if (detection.header.frame_id == "cliff_side_right") {
+      cliff_side_right = true;
+    }
   }
+
+  // The robot is kidnap when the cliff sensors and the wheel drop are activated
+  kidnap_status_ = wheel_drop_left && wheel_drop_right && cliff_front_left &&
+                    cliff_front_right && cliff_side_left && cliff_side_right;
 
   // Set header timestamp.
   this->kidnap_status_msg_.header.stamp = now();
@@ -200,28 +208,20 @@ void MockPublisher::kidnap_callback(irobot_create_msgs::msg::HazardDetectionVect
 
 void MockPublisher::stop_callback(nav_msgs::msg::Odometry::SharedPtr msg)
 {
-  auto position = msg->pose.pose.position;
-  auto orientation = msg->pose.pose.orientation;
+  const auto position = msg->pose.pose.position;
+  const auto orientation = msg->pose.pose.orientation;
   const float tol = 0.00001;
 
-  if (abs(position.x-pose_x) < tol && abs(position.y-pose_y) < tol &&
-      abs(position.z-pose_z) < tol && abs(orientation.x-orientation_x) < tol &&
-      abs(orientation.y-orientation_y) < tol && abs(orientation.z-orientation_z) < tol &&
-      abs(orientation.w-orientation_w) < tol) {
-    stop_status_ = true;
-  } else {
-    stop_status_ = false;
-  }
+  bool cond_x = abs(position.x - prev_position.position.x) < tol;
+  bool cond_y = abs(position.y - prev_position.position.y) < tol;
+  bool cond_yaw = abs(orientation.y - prev_position.orientation.y) < tol;
 
-  // Store the current position
-  pose_x = position.x;
-  pose_y = position.y;
-  pose_z = position.z;
+  bool stop_status_ = cond_x && cond_y && cond_yaw;
 
-  orientation_x = orientation.x;
-  orientation_y = orientation.y;
-  orientation_z = orientation.z;
-  orientation_w = orientation.w;
+  // Updates the value of the position
+  prev_position.position.x = position.x;
+  prev_position.position.y = position.y;
+  prev_position.orientation.y = orientation.y;
 
   // Set header timestamp.
   this->stop_status_msg_.header.stamp = now();
@@ -231,8 +231,7 @@ void MockPublisher::stop_callback(nav_msgs::msg::Odometry::SharedPtr msg)
   this->stop_status_publisher_->publish(this->stop_status_msg_);
 }
 
-void MockPublisher::lightring_callback(irobot_create_msgs::msg::LightringLeds::SharedPtr msg)
+void MockPublisher::lightring_callback(irobot_create_msgs::msg::LightringLeds::SharedPtr /*msg*/)
 {
-  (void)msg;
 }
 }  // namespace irobot_create_toolbox

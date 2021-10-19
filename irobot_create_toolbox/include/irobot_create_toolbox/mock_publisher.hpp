@@ -16,10 +16,14 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <sensor_msgs/msg/battery_state.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+
 #include <irobot_create_msgs/msg/button.hpp>
 #include <irobot_create_msgs/msg/hazard_detection.hpp>
 #include <irobot_create_msgs/msg/hazard_detection_vector.hpp>
@@ -27,11 +31,11 @@
 #include <irobot_create_msgs/msg/kidnap_status.hpp>
 #include <irobot_create_msgs/msg/led_color.hpp>
 #include <irobot_create_msgs/msg/lightring_leds.hpp>
-#include <nav_msgs/msg/odometry.hpp>
 #include <irobot_create_msgs/msg/slip_status.hpp>
 #include <irobot_create_msgs/msg/stop_status.hpp>
 #include <irobot_create_msgs/msg/wheel_vels.hpp>
 #include <irobot_create_toolbox/parameter_helper.hpp>
+
 #include <rclcpp/rclcpp.hpp>
 
 
@@ -58,11 +62,12 @@ class MockPublisher : public rclcpp::Node
 
   // Publishers
   std::shared_ptr<
-    rclcpp::Publisher<irobot_create_msgs::msg::InterfaceButtons>> buttons_publisher_;
-  rclcpp::Publisher<irobot_create_msgs::msg::SlipStatus>::SharedPtr slip_status_publisher_;
-  rclcpp::Publisher<irobot_create_msgs::msg::KidnapStatus>::SharedPtr kidnap_status_publisher_;
-  rclcpp::Publisher<sensor_msgs::msg::BatteryState>::SharedPtr battery_state_publisher_;
-  rclcpp::Publisher<irobot_create_msgs::msg::StopStatus>::SharedPtr stop_status_publisher_;
+    rclcpp::Publisher<irobot_create_msgs::msg::InterfaceButtons>> buttons_publisher_{nullptr};
+  rclcpp::Publisher<irobot_create_msgs::msg::SlipStatus>::SharedPtr slip_status_publisher_{nullptr};
+  rclcpp::Publisher<irobot_create_msgs::msg::KidnapStatus>::SharedPtr
+    kidnap_status_publisher_{nullptr};
+  rclcpp::Publisher<sensor_msgs::msg::BatteryState>::SharedPtr battery_state_publisher_{nullptr};
+  rclcpp::Publisher<irobot_create_msgs::msg::StopStatus>::SharedPtr stop_status_publisher_{nullptr};
 
   // Subscribers
   rclcpp::Subscription<
@@ -100,11 +105,9 @@ class MockPublisher : public rclcpp::Node
   // Message to store the stop status
   irobot_create_msgs::msg::StopStatus stop_status_msg_;
 
-  bool kidnap_status_ = false;
-  bool stop_status_ = true;
+  geometry_msgs::msg::Pose prev_position;
 
-  float pose_x = 0, pose_y = 0, pose_z = 0;
-  float orientation_x = 0, orientation_y = 0, orientation_z = 0, orientation_w = 0;
+  bool kidnap_status_{false};
 };
 
 }  // namespace irobot_create_toolbox
